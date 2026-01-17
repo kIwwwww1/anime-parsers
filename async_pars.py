@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from loguru import logger
 import asyncio
 import httpx
-from url_params import (BaseSearchModel, MediaId)
+from url_params import (BaseSearchModel, MediaId, SearchModel,OrderModel, TypeModel)
 from pydantic import ValidationError
 from json import JSONDecodeError
 
@@ -50,7 +50,7 @@ class AsyncExecutor():
             await self._client.aclose()
 
 
-    async def a_search_media(self, keyword: str, page: int):
+    async def a_search_media(self, keyword: str, page: int = 1):
         '''
         {
             "keyword": "Название",           (Поисковый запрос, который вы отправили)
@@ -61,8 +61,9 @@ class AsyncExecutor():
         '''
         try:
             params = BaseSearchModel(keyword=keyword, page=page).model_dump()
+            endpoint_url = f'{self._base_url}/search-by-keyword'
             resp: dict = await self.a_get(
-                url=self._base_url + '/search-by-keyword',
+                url=endpoint_url,
                 params=params,
                 headers={'X-API-KEY': self._x_api_key},
             )
@@ -151,12 +152,89 @@ class AsyncExecutor():
             return {'error': 'ID не может быть < 1'}
 
 
+    async def a_get_awards(self, media_id: int):
+        try:
+            params = MediaId(id=media_id).model_dump()
+            endpoint_url = f'{self._new_base_url}/{params.get('id')}'
+            resp = await self.a_get(
+                url=endpoint_url,
+                params=params,
+                headers={'X-API-KEY': self._x_api_key})
+            return resp
+        except JSONDecodeError:
+            return {'error': 'Сервер вернул 404'}
+        except ValidationError:
+            return {'error': 'ID не может быть < 1'}
+        
+
+    async def a_get_similar_media(self, media_id: int):
+        try:
+            params = MediaId(id=media_id).model_dump()
+            endpoint_url = f'{self._new_base_url}/{params.get('id')}/similars'
+            resp = await self.a_get(
+                url=endpoint_url,
+                params=params,
+                headers={'X-API-KEY': self._x_api_key})
+            return resp
+        except JSONDecodeError:
+            return {'error': 'Сервер вернул 404'}
+        except ValidationError:
+            return {'error': 'ID не может быть < 1'}
+
+    async def a_get_relations_media(self, media_id: int):
+        try:
+            params = MediaId(id=media_id).model_dump()
+            endpoint_url = f'{self._new_base_url}/{params.get('id')}/relations'
+            resp = await self.a_get(
+                url=endpoint_url,
+                params=params,
+                headers={'X-API-KEY': self._x_api_key})
+            return resp
+        except JSONDecodeError:
+            return {'error': 'Сервер вернул 404'}
+        except ValidationError:
+            return {'error': 'ID не может быть < 1'}
+
+
+    async def a_get_filter(self):
+        endpoint_url = f'{self._new_base_url}/filters'
+        resp = await self.a_get(
+            url=endpoint_url,
+            headers={'X-API-KEY': self._x_api_key})
+
+        return resp
+
+
+    async def a_get_filters_media(
+        self, countries_id: int | None = None, genres_id: int | None = None,
+        order: OrderModel | None = None, type: TypeModel | None = None,
+        rating_from: int | float | None = None, rating_to: int | float | None = None,
+        year_from: int | None = None, year_to: int | None = None,
+        imdb_id: int | None = None, keyword: str | None = None, page: int = 1):
+        params = SearchModel(
+            countries=countries_id, genres=genres_id,
+            order=order, type=type, ratingFrom=rating_from, ratingTo=rating_to,
+            yearFrom=year_from, yearTo=year_to,
+            imdbId=imdb_id, keyword=keyword, page=page).model_dump(exclude_none=True)
+        logger.debug(params)
+        
+        resp = await self.a_get(
+            url=self._new_base_url,
+            params=params,
+            headers={'X-API-KEY': self._x_api_key}
+            )
+        return resp
+
 async def a_main():
     http_client = A_HTTPCLIENT()
     ex = AsyncExecutor(secret_key, http_client.client)
-    result = await ex.a_search_media('Атака титанов', 1)
-    # result = await ex.a_get_media_by_id(14124)
-    # result = await ex.a_get_financials(1242365)
+    # result = await ex.a_search_media('Атака титанов', 1)
+    # result = await ex.a_get_financials(462606)
+    # result = await ex.a_get_awards(462606)
+    # result = await ex.a_get_similar_media(749374)
+    # result = await ex.a_get_relations_media(749374)
+    # result = await ex.a_get_filter()
+    result = await ex.a_get_filters_media(genres_id=24, keyword='Магическая битва', page=1)
     print(result)
 
 
