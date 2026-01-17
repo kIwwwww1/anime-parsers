@@ -3,10 +3,11 @@ from url_params import BaseSearchModel
 
 class _HTTPCLIENT():
 
-    '''Синхронный вариант кода'''
+    '''Синхронный вариант AsyncExecutor'''
 
 
     _instance = None
+    client: httpx.Client
 
     def __new__(cls):
         if cls._instance is None:
@@ -20,7 +21,7 @@ class _HTTPCLIENT():
 
 class SyncExecutor():
 
-    '''Синхронный вариант кода'''
+    '''Синхронный вариант SyncExecutor'''
 
     def __init__(self, _x_api_key: str, client: httpx.Client):
         self._x_api_key = _x_api_key
@@ -28,7 +29,7 @@ class SyncExecutor():
         self._base_url = 'https://kinopoiskapiunofficial.tech/api/v2.1/films'
 
 
-    def get_anime(self, keyword: str, page: int = 20):
+    def search_media(self, keyword: str, page: int = 20):
         '''
         {
             "keyword": "Название",           (Поисковый запрос, который вы отправили)
@@ -53,7 +54,7 @@ class SyncExecutor():
 def main():
     http_client = _HTTPCLIENT()
     ex = SyncExecutor('672174fa-fef0-4fc5-bf60-65d950dcb0a1', http_client.client)
-    result = ex.get_anime('магическая битва', 1)
+    result = ex.search_media('магическая битва', 1)
     print(result)
     http_client.close()
 
