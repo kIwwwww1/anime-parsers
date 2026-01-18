@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal
 
 OrderModel = Literal['RATING', 'NUM_VOTE', 'YEAR']
 TypeModel = Literal['FILM', 'TV_SHOW', 'TV_SERIAL', 'MINI_SERIAL', 'ALL']

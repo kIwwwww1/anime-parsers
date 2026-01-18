@@ -1,31 +1,13 @@
-from os import getenv
-from dotenv import load_dotenv
 from loguru import logger
 import asyncio
 import httpx
-from url_params import (BaseSearchModel, MediaId, SearchModel,OrderModel, TypeModel)
+from assets.validation.url_params import (BaseSearchModel, MediaId, SearchModel,OrderModel, TypeModel)
 from pydantic import ValidationError
 from json import JSONDecodeError
+from assets.main_assets.respons import A_HTTPCLIENT
 
-load_dotenv()
 
-secret_key = getenv('SECRET_KEY')
 
-class A_HTTPCLIENT():
-
-    '''Асинхронный вариант кода'''
-
-    _instance = None
-    client: httpx.AsyncClient
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.client = httpx.AsyncClient()
-        return cls._instance
-    
-    async def close(self):
-        await self.client.aclose()
 
 
 class AsyncExecutor():
@@ -181,6 +163,7 @@ class AsyncExecutor():
         except ValidationError:
             return {'error': 'ID не может быть < 1'}
 
+
     async def a_get_relations_media(self, media_id: int):
         try:
             params = MediaId(id=media_id).model_dump()
@@ -224,19 +207,3 @@ class AsyncExecutor():
             headers={'X-API-KEY': self._x_api_key}
             )
         return resp
-
-async def a_main():
-    http_client = A_HTTPCLIENT()
-    ex = AsyncExecutor(secret_key, http_client.client)
-    # result = await ex.a_search_media('Атака титанов', 1)
-    # result = await ex.a_get_financials(462606)
-    # result = await ex.a_get_awards(462606)
-    # result = await ex.a_get_similar_media(749374)
-    # result = await ex.a_get_relations_media(749374)
-    # result = await ex.a_get_filter()
-    result = await ex.a_get_filters_media(genres_id=24, keyword='Магическая битва', page=1)
-    print(result)
-
-
-if __name__ == '__main__':
-    asyncio.run(a_main())
