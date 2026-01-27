@@ -1,4 +1,5 @@
 import httpx
+from loguru import logger
 
 class A_HTTPCLIENT():
 
@@ -15,3 +16,5 @@ class A_HTTPCLIENT():
     
     async def close(self):
         await self.client.aclose()
+
+
